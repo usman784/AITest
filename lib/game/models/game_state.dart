@@ -36,6 +36,7 @@ final class GamePlaying extends GameStatus {
     this.isComplete = false,
     this.selectedArrow,
     this.errorArrow,
+    this.hintArrowId,
     this.elapsedTime = Duration.zero,
     this.replayMoves = const [],
     this.isPaused = false,
@@ -55,6 +56,9 @@ final class GamePlaying extends GameStatus {
 
   /// Remaining hints the player can use.
   final int hintCount;
+
+  /// The arrow the hint system is currently highlighting, or `null`.
+  final int? hintArrowId;
 
   /// Whether all arrows have been cleared.
   final bool isComplete;
@@ -86,6 +90,8 @@ final class GamePlaying extends GameStatus {
     bool clearSelectedArrow = false,
     Arrow? errorArrow,
     bool clearErrorArrow = false,
+    int? hintArrowId,
+    bool clearHintArrow = false,
     Duration? elapsedTime,
     List<int>? replayMoves,
     bool? isPaused,
@@ -101,6 +107,8 @@ final class GamePlaying extends GameStatus {
           clearSelectedArrow ? null : (selectedArrow ?? this.selectedArrow),
       errorArrow:
           clearErrorArrow ? null : (errorArrow ?? this.errorArrow),
+      hintArrowId:
+          clearHintArrow ? null : (hintArrowId ?? this.hintArrowId),
       elapsedTime: elapsedTime ?? this.elapsedTime,
       replayMoves: replayMoves ?? this.replayMoves,
       isPaused: isPaused ?? this.isPaused,
@@ -116,6 +124,7 @@ final class GamePlaying extends GameStatus {
         isComplete,
         selectedArrow,
         errorArrow,
+        hintArrowId,
         elapsedTime,
         replayMoves,
         isPaused,
