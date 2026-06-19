@@ -214,13 +214,15 @@ class MinimalistTheme {
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
         },
       ),
-      extensions: const [
+      extensions: [
         ArrowFlowThemeExtension(
-          arrowColor: MinimalistColors.arrowColor,
-          gridLineColor: MinimalistColors.gridLine,
-          glowColor: Color(0x334361EE),
-          backgroundGradientStart: MinimalistColors.background,
-          backgroundGradientEnd: Color(0xFFECEFF1),
+          arrowColor: isDark ? const Color(0xFFB0B8C8) : MinimalistColors.arrowColor,
+          gridLineColor: isDark ? const Color(0xFF3A3A3A) : MinimalistColors.gridLine,
+          glowColor: const Color(0x334361EE),
+          backgroundGradientStart:
+              isDark ? const Color(0xFF0F0F12) : MinimalistColors.background,
+          backgroundGradientEnd:
+              isDark ? const Color(0xFF1A1A2E) : const Color(0xFFECEFF1),
           isNeonTheme: false,
           isSpaceTheme: false,
           isWoodenTheme: false,
@@ -228,7 +230,7 @@ class MinimalistTheme {
           successColor: MinimalistColors.success,
           errorColor: MinimalistColors.error,
           accentColor: MinimalistColors.accent,
-          sketchStrokeColor: MinimalistColors.gridLine,
+          sketchStrokeColor: isDark ? const Color(0xFF3A3A3A) : MinimalistColors.gridLine,
           meteorColor: Colors.transparent,
           starFieldColor: Colors.transparent,
         ),
