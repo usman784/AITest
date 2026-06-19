@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import 'package:arrow_flow/core/constants/app_dimensions.dart';
-import 'package:arrow_flow/core/constants/app_typography.dart';
 import 'package:arrow_flow/core/utils/haptic_helper.dart';
 import 'package:arrow_flow/features/onboarding/onboarding_page_1.dart';
 import 'package:arrow_flow/features/onboarding/onboarding_page_2.dart';
@@ -13,17 +14,29 @@ import 'package:arrow_flow/features/onboarding/onboarding_page_4.dart';
 import 'package:arrow_flow/features/onboarding/onboarding_page_5.dart';
 import 'package:arrow_flow/features/onboarding/onboarding_provider.dart';
 
-/// Five-page onboarding flow shown on first launch.
-///
-/// The container owns navigation controls (Skip, Back, page indicator, CTA
-/// button) so individual page widgets remain purely presentational.
-///
-/// Flow:
-///   Page 1 — Welcome
-///   Page 2 — How to Play
-///   Page 3 — Game Modes & Grid Shapes
-///   Page 4 — Themes & Sound
-///   Page 5 — Choose Your Style (saves profile → navigates to /home)
+// ── Dark premium palette (same as splash/home) ────────────────────────────────
+
+const _oBg0    = Color(0xFF0D0B1E);
+const _oBg1    = Color(0xFF1E1560);
+const _oAccent = Color(0xFF6C63FF);
+const _oAccentB = Color(0xFF9D8FFF);
+const _oGold   = Color(0xFFFFC300);
+
+// Per-page accent gradient pairs for the CTA button
+const List<List<Color>> _pageGrad = [
+  [Color(0xFF6C63FF), Color(0xFF7209B7)],
+  [Color(0xFF4361EE), Color(0xFF6C63FF)],
+  [Color(0xFF7209B7), Color(0xFFE63946)],
+  [Color(0xFF00B4D8), Color(0xFF4361EE)],
+  [Color(0xFFFFC300), Color(0xFFFF9F1C)],
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OnboardingScreen
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Five-page onboarding shown on first launch.
+/// Container owns navigation controls; page widgets remain purely presentational.
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -35,7 +48,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   late final PageController _pageController;
   static const int _totalPages = 5;
 
-  // CTA labels indexed by page (0–4).
   static const List<String> _ctaLabels = [
     "Let's Go  →",
     'Next  →',
@@ -56,26 +68,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     super.dispose();
   }
 
-  // ── Navigation helpers ────────────────────────────────────────────────────
+  void _animateTo(int page) => _pageController.animateToPage(
+        page,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
 
-  void _animateTo(int page) {
-    _pageController.animateToPage(
-      page,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
+  void _onNext(int page) {
+    HapticHelper.onUiTap();
+    if (page < _totalPages - 1) _animateTo(page + 1);
   }
 
-  void _onNext(int currentPage) {
+  void _onBack(int page) {
     HapticHelper.onUiTap();
-    if (currentPage < _totalPages - 1) {
-      _animateTo(currentPage + 1);
-    }
-  }
-
-  void _onBack(int currentPage) {
-    HapticHelper.onUiTap();
-    if (currentPage > 0) _animateTo(currentPage - 1);
+    if (page > 0) _animateTo(page - 1);
   }
 
   void _onSkip() {
@@ -90,150 +96,206 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (mounted) context.go('/home');
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(onboardingNotifierProvider);
     final notifier = ref.read(onboardingNotifierProvider.notifier);
-    final currentPage = state.currentPage;
-    final isLast = currentPage == _totalPages - 1;
-    final cs = Theme.of(context).colorScheme;
+    final page   = state.currentPage;
+    final isLast = page == _totalPages - 1;
+    final pad    = MediaQuery.paddingOf(context);
+    final grad   = _pageGrad[page.clamp(0, _pageGrad.length - 1)];
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          // ── Page content ─────────────────────────────────────────────────
-          PageView(
-            controller: _pageController,
-            physics: const BouncingScrollPhysics(),
-            onPageChanged: (page) => notifier.setPage(page),
-            children: const [
-              OnboardingPage1(),
-              OnboardingPage2(),
-              OnboardingPage3(),
-              OnboardingPage4(),
-              OnboardingPage5(),
-            ],
+      backgroundColor: _oBg0,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [_oBg0, _oBg1],
           ),
-
-          // ── Skip button (top-right, pages 0–3) ───────────────────────────
-          if (!isLast)
+        ),
+        child: Stack(
+          children: [
+            // ── Ambient decorative arrows ─────────────────────────────────
             Positioned(
-              top: MediaQuery.paddingOf(context).top + 8,
-              right: AppDimensions.spaceMD,
-              child: TextButton(
-                onPressed: _onSkip,
-                child: Text(
-                  'Skip',
-                  style: AppTypography.labelLarge.copyWith(
-                    color: cs.onSurface.withAlpha(0x88),
+              left: 12, bottom: 160,
+              child: Text('↑',
+                  style: GoogleFonts.nunito(
+                    fontSize: 40, fontWeight: FontWeight.w900,
+                    color: Colors.white.withValues(alpha: 0.04),
+                  )),
+            ),
+            Positioned(
+              right: 16, top: pad.top + 80,
+              child: Text('→',
+                  style: GoogleFonts.nunito(
+                    fontSize: 32, fontWeight: FontWeight.w900,
+                    color: Colors.white.withValues(alpha: 0.04),
+                  )),
+            ),
+
+            // ── Animated page glow blob (shifts per page) ─────────────────
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+              top: page.isEven ? -60 : 100,
+              left: page < 2 ? -80 : null,
+              right: page >= 2 ? -80 : null,
+              child: Container(
+                width: 280,
+                height: 280,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      grad.first.withValues(alpha: 0.18),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
               ),
             ),
 
-          // ── Back button (top-left, pages 1–4) ────────────────────────────
-          if (currentPage > 0)
-            Positioned(
-              top: MediaQuery.paddingOf(context).top + 8,
-              left: AppDimensions.spaceSM,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                color: cs.onSurface.withAlpha(0x88),
-                onPressed: () => _onBack(currentPage),
-              ),
-            ),
-
-          // ── Bottom navigation bar ─────────────────────────────────────────
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: MediaQuery.paddingOf(context).bottom +
-                AppDimensions.spaceMD,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Page dots
-                SmoothPageIndicator(
-                  controller: _pageController,
-                  count: _totalPages,
-                  effect: WormEffect(
-                    dotWidth: 8,
-                    dotHeight: 8,
-                    spacing: 6,
-                    activeDotColor: cs.primary,
-                    dotColor: cs.onSurface.withAlpha(0x33),
-                  ),
-                ),
-
-                const SizedBox(height: AppDimensions.spaceMD),
-
-                // CTA button
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.spaceXL,
-                  ),
-                  child: _CtaButton(
-                    label: _ctaLabels[currentPage],
-                    isLast: isLast,
-                    enabled: !isLast ||
-                        ref
-                            .read(onboardingNotifierProvider.notifier)
-                            .canFinish,
-                    onTap: isLast
-                        ? _onFinish
-                        : () => _onNext(currentPage),
-                  ),
-                ),
+            // ── Page content ───────────────────────────────────────────────
+            PageView(
+              controller: _pageController,
+              physics: const BouncingScrollPhysics(),
+              onPageChanged: (p) => notifier.setPage(p),
+              children: const [
+                OnboardingPage1(),
+                OnboardingPage2(),
+                OnboardingPage3(),
+                OnboardingPage4(),
+                OnboardingPage5(),
               ],
             ),
-          ),
-        ],
+
+            // ── Skip button ────────────────────────────────────────────────
+            if (!isLast)
+              Positioned(
+                top: pad.top + 10,
+                right: AppDimensions.spaceMD,
+                child: TextButton(
+                  onPressed: _onSkip,
+                  child: Text('Skip',
+                      style: GoogleFonts.nunito(
+                        fontSize: 14, fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.55),
+                      )),
+                ),
+              ),
+
+            // ── Back button ────────────────────────────────────────────────
+            if (page > 0)
+              Positioned(
+                top: pad.top + 6,
+                left: 4,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                  color: Colors.white.withValues(alpha: 0.55),
+                  onPressed: () => _onBack(page),
+                ),
+              ),
+
+            // ── Bottom bar ────────────────────────────────────────────────
+            Positioned(
+              left: 0, right: 0,
+              bottom: pad.bottom + AppDimensions.spaceMD,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Animated page dots
+                  SmoothPageIndicator(
+                    controller: _pageController,
+                    count: _totalPages,
+                    effect: WormEffect(
+                      dotWidth: 8, dotHeight: 8, spacing: 6,
+                      activeDotColor: _oAccentB,
+                      dotColor: Colors.white.withValues(alpha: 0.2),
+                      paintStyle: PaintingStyle.fill,
+                    ),
+                  ),
+
+                  const SizedBox(height: AppDimensions.spaceMD),
+
+                  // Gradient CTA button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.spaceXL),
+                    child: _GradientCtaButton(
+                      label: _ctaLabels[page],
+                      gradient: grad,
+                      enabled: !isLast || notifier.canFinish,
+                      onTap: isLast ? _onFinish : () => _onNext(page),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CTA button
+// _GradientCtaButton
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _CtaButton extends StatelessWidget {
-  const _CtaButton({
+class _GradientCtaButton extends StatelessWidget {
+  const _GradientCtaButton({
     required this.label,
-    required this.isLast,
+    required this.gradient,
     required this.enabled,
     required this.onTap,
   });
 
   final String label;
-  final bool isLast;
+  final List<Color> gradient;
   final bool enabled;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     return AnimatedOpacity(
-      opacity: enabled ? 1.0 : 0.5,
+      opacity: enabled ? 1.0 : 0.4,
       duration: const Duration(milliseconds: 200),
-      child: SizedBox(
-        width: double.infinity,
-        height: AppDimensions.buttonHeight,
-        child: ElevatedButton(
-          onPressed: enabled ? onTap : null,
-          child: Text(
-            label,
-            style: AppTypography.labelLarge.copyWith(
-              color: isLast ? cs.onPrimary : cs.onPrimary,
-              fontWeight: FontWeight.w700,
+      child: Material(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLG),
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          height: AppDimensions.buttonHeight,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: gradient),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLG),
+            boxShadow: [
+              BoxShadow(
+                color: gradient.last.withValues(alpha: 0.45),
+                blurRadius: 16, offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: InkWell(
+            onTap: enabled ? onTap : null,
+            child: Center(
+              child: Text(
+                label,
+                style: GoogleFonts.nunito(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 0.3,
+                ),
+              ),
             ),
           ),
         ),
       ),
-    );
+    )
+        .animate(key: ValueKey(label))
+        .fadeIn(duration: 200.ms)
+        .scaleXY(begin: 0.97, end: 1.0, duration: 200.ms, curve: Curves.easeOut);
   }
 }

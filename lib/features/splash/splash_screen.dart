@@ -1,47 +1,34 @@
+// ── REDESIGNED: Arrows – Puzzle Escape Splash Screen ─────────────────────────
+// Rich dark-gradient background with animated floating arrows and glowing logo.
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:arrow_flow/core/constants/app_colors.dart';
-import 'package:arrow_flow/core/constants/app_typography.dart';
-import 'package:arrow_flow/core/di/providers.dart';
-import 'package:arrow_flow/core/theme/theme_extension.dart';
-// kOnboardingComplete and kUserProfileExists are the source of truth here:
-import 'package:arrow_flow/features/onboarding/onboarding_provider.dart'
-    show kOnboardingComplete, kUserProfileExists;
+import 'package:arrow_flow/features/onboarding/onboarding_provider.dart';
 
-// ── Arrow symbols displayed in the logo ──────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Splash palette (self-contained — does not use AppColors to allow full theme)
+// ─────────────────────────────────────────────────────────────────────────────
 
-const List<String> _arrowSymbols = ['↑', '→', '↓', '←', '↑'];
-
-/// Accent colours for each letter of "Arrow" — one per [_arrowSymbols] entry.
-const List<Color> _arrowAccents = [
-  Color(0xFF4361EE), // ↑ blue
-  Color(0xFFFF006E), // → magenta
-  Color(0xFF00F5FF), // ↓ cyan
-  Color(0xFF2DC653), // ← green
-  Color(0xFF7C3AED), // ↑ purple
-];
+const Color _bg0 = Color(0xFF0D0B1E);
+const Color _bg1 = Color(0xFF1A1040);
+const Color _bg2 = Color(0xFF0F0C29);
+const Color _accent = Color(0xFF6C63FF);
+const Color _accentBright = Color(0xFF9D8FFF);
+const Color _gold = Color(0xFFFFC300);
+const Color _white = Colors.white;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SplashScreen
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Full-screen animated splash shown for 2.8 s on every cold start.
-///
-/// Animation timeline:
-///  0.0–0.6 s  Arrow letters drop in from above with spring physics.
-///  0.6–1.2 s  Letters settle; Neon theme adds a glow pulse.
-///  1.2–2.0 s  "Flow" subtitle appears with a typewriter effect.
-///  2.0–2.8 s  Entire logo scales up 5 % then fades to white → next screen.
-///
-/// Navigation:
-///  • `onboarding_complete` == false  → /onboarding
-///  • `user_profile_exists` == false  → /onboarding
-///  • otherwise                        → /home
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -50,187 +37,128 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
-    with TickerProviderStateMixin {
-  // ── Controllers ──────────────────────────────────────────────────────────────
-
-  /// Drives the animated particle background.
-  late final AnimationController _particleCtrl;
-
-  /// Drives the loading bar sweep animation.
+    with SingleTickerProviderStateMixin {
   late final AnimationController _loadingCtrl;
 
-  /// Drives the full-screen exit fade (white-out).
-  late final AnimationController _exitCtrl;
-
-  // ── State ────────────────────────────────────────────────────────────────────
-
-  bool _showFlow = false;
-  bool _glowActive = false;
-  String _typewriterText = '';
-  static const String _flowWord = 'Flow';
+  int _arrowsVisible = 0;
 
   @override
   void initState() {
     super.initState();
 
-    _particleCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 8),
-    )..repeat();
+    // Light icons on dark background.
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+    );
 
     _loadingCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2600),
-    )..forward();
-
-    _exitCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 1200),
     );
 
     _runSequence();
   }
 
   Future<void> _runSequence() async {
-    // Step 1 + 2: arrow letters animate in (handled by flutter_animate)
-    await Future<void>.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
-
-    // Trigger glow pulse for Neon / Space themes.
-    setState(() => _glowActive = true);
-
-    // Step 3: typewriter for "Flow"
-    await _typewriterEffect();
-    if (!mounted) return;
-
-    // Step 4: exit + navigate
-    await Future<void>.delayed(const Duration(milliseconds: 400));
-    if (!mounted) return;
-
-    await _exitCtrl.forward();
-    if (!mounted) return;
-
-    await _navigateNext();
-  }
-
-  Future<void> _typewriterEffect() async {
-    for (var i = 1; i <= _flowWord.length; i++) {
-      await Future<void>.delayed(const Duration(milliseconds: 180));
+    await Future.delayed(const Duration(milliseconds: 700));
+    for (int i = 0; i < 4; i++) {
       if (!mounted) return;
-      setState(() {
-        _typewriterText = _flowWord.substring(0, i);
-        if (i == 1) _showFlow = true;
-      });
+      setState(() => _arrowsVisible = i + 1);
+      if (i < 3) await Future.delayed(const Duration(milliseconds: 180));
     }
-    // Small pause at full word before cursor blinks off.
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-  }
-
-  Future<void> _navigateNext() async {
-    final prefs = ref.read(sharedPreferencesProvider);
-
-    // Pre-load world 1 levels while the splash plays.
-    try {
-      final repo = ref.read(levelRepositoryProvider);
-      await repo.getWorld(1);
-    } catch (_) {
-      // Non-fatal — level data will be loaded lazily on the game screen.
-    }
-
     if (!mounted) return;
-
+    await _loadingCtrl.forward();
+    if (!mounted) return;
+    // Route to onboarding on first launch, home on subsequent launches.
+    final prefs = await SharedPreferences.getInstance();
     final onboardingDone = prefs.getBool(kOnboardingComplete) ?? false;
-    final profileExists = prefs.getBool(kUserProfileExists) ?? false;
-
-    if (!onboardingDone || !profileExists) {
-      context.go('/onboarding');
-    } else {
-      context.go('/home');
-    }
+    if (mounted) context.go(onboardingDone ? '/home' : '/onboarding');
   }
 
   @override
   void dispose() {
-    _particleCtrl.dispose();
     _loadingCtrl.dispose();
-    _exitCtrl.dispose();
     super.dispose();
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
-    final ext = Theme.of(context).extension<ArrowFlowThemeExtension>();
-    final isNeon = ext?.isNeonTheme ?? false;
-    final isSpace = ext?.isSpaceTheme ?? false;
-    final gradStart = ext?.backgroundGradientStart ??
-        MinimalistColors.background;
-    final gradEnd = ext?.backgroundGradientEnd ?? const Color(0xFFECEFF1);
-    final size = MediaQuery.sizeOf(context);
-
-    return AnimatedBuilder(
-      animation: _exitCtrl,
-      builder: (context, child) {
-        return Opacity(
-          opacity: 1.0 - _exitCtrl.value,
-          child: child,
-        );
-      },
-      child: Scaffold(
-        backgroundColor: gradStart,
-        body: Stack(
+    final size = MediaQuery.of(context).size;
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [_bg0, _bg1, _bg2],
+          ),
+        ),
+        child: Stack(
           children: [
-            // ── Animated background ──────────────────────────────────────────
-            AnimatedBuilder(
-              animation: _particleCtrl,
-              builder: (_, __) => CustomPaint(
-                size: size,
-                painter: _ParticlePainter(
-                  progress: _particleCtrl.value,
-                  gradientStart: gradStart,
-                  gradientEnd: gradEnd,
-                  isSpace: isSpace,
-                  isNeon: isNeon,
+            // ── Scattered ambient arrows ──────────────────────────────────
+            ..._ambientArrows(size),
+
+            // ── Glow orb behind logo ──────────────────────────────────────
+            Center(
+              child: Container(
+                width: 280,
+                height: 280,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      _accent.withValues(alpha: 0.25),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
               ),
             ),
 
-            // ── Main content ──────────────────────────────────────────────────
-            SafeArea(
+            // ── Central logo ──────────────────────────────────────────────
+            Center(
+              child: _LogoDiamond(arrowsVisible: _arrowsVisible),
+            ),
+
+            // ── Bottom gradient progress bar ──────────────────────────────
+            Positioned(
+              left: 40,
+              right: 40,
+              bottom: 52,
               child: Column(
                 children: [
-                  const Spacer(flex: 3),
-
-                  // Logo
-                  _Logo(
-                    glowActive: _glowActive,
-                    isNeon: isNeon,
-                    isSpace: isSpace,
-                    typewriterText: _typewriterText,
-                    showFlow: _showFlow,
+                  Text(
+                    'loading…',
+                    style: GoogleFonts.nunito(
+                      fontSize: 11,
+                      color: _white.withValues(alpha: 0.35),
+                      letterSpacing: 2.0,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
-
-                  const Spacer(flex: 3),
-
-                  // Loading bar
-                  _LoadingBar(controller: _loadingCtrl),
-
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  AnimatedBuilder(
+                    animation: _loadingCtrl,
+                    builder: (_, __) => ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [_accent, _gold],
+                        ).createShader(bounds),
+                        child: LinearProgressIndicator(
+                          value: _loadingCtrl.value,
+                          backgroundColor:
+                              _white.withValues(alpha: 0.08),
+                          color: _white,
+                          minHeight: 3,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
-              ),
-            ),
-
-            // ── Version number ────────────────────────────────────────────────
-            Positioned(
-              right: 16,
-              bottom: 24,
-              child: Text(
-                'v1.0.0',
-                style: AppTypography.bodySmall.copyWith(
-                  color: (ext?.gridLineColor ?? Colors.grey)
-                      .withAlpha(0xAA),
-                ),
               ),
             ),
           ],
@@ -238,314 +166,171 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       ),
     );
   }
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Logo widget
-// ─────────────────────────────────────────────────────────────────────────────
+  // 14 fixed ambient arrow symbols scattered across the screen
+  List<Widget> _ambientArrows(Size size) {
+    final items = [
+      // (glyph, left%, top%, size, opacity, rotation)
+      ('↑', 0.08, 0.10, 22.0, 0.12, 0.2),
+      ('→', 0.85, 0.08, 18.0, 0.10, -0.1),
+      ('↓', 0.12, 0.75, 26.0, 0.14, 0.3),
+      ('←', 0.80, 0.80, 20.0, 0.11, -0.2),
+      ('↑', 0.50, 0.06, 16.0, 0.09, 0.0),
+      ('→', 0.05, 0.45, 20.0, 0.10, 0.1),
+      ('↓', 0.90, 0.50, 18.0, 0.08, -0.15),
+      ('←', 0.45, 0.88, 24.0, 0.13, 0.25),
+      ('↑', 0.68, 0.18, 14.0, 0.07, -0.05),
+      ('→', 0.28, 0.20, 16.0, 0.08, 0.15),
+      ('↓', 0.70, 0.70, 22.0, 0.10, 0.0),
+      ('←', 0.18, 0.60, 14.0, 0.07, -0.1),
+      ('↑', 0.92, 0.30, 18.0, 0.09, 0.3),
+      ('→', 0.38, 0.92, 16.0, 0.08, -0.2),
+    ];
 
-class _Logo extends StatelessWidget {
-  const _Logo({
-    required this.glowActive,
-    required this.isNeon,
-    required this.isSpace,
-    required this.typewriterText,
-    required this.showFlow,
-  });
-
-  final bool glowActive;
-  final bool isNeon;
-  final bool isSpace;
-  final String typewriterText;
-  final bool showFlow;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // "Arrow" — five coloured arrow symbols drop in
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_arrowSymbols.length, (i) {
-            final letter = _arrowSymbols[i];
-            final color = _arrowAccents[i];
-            return _ArrowLetter(
-              symbol: letter,
-              color: color,
-              index: i,
-              glow: glowActive && (isNeon || isSpace),
-            );
-          }),
-        ),
-
-        const SizedBox(height: 4),
-
-        // "Flow" — typewriter reveal
-        SizedBox(
-          height: 52,
-          child: AnimatedOpacity(
-            opacity: showFlow ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 200),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  typewriterText,
-                  style: AppTypography.displayMedium.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    letterSpacing: 6,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                // Blinking cursor
-                _BlinkingCursor(
-                    color: Theme.of(context).colorScheme.primary),
-              ],
+    return items.indexed.map((entry) {
+      final i   = entry.$1;
+      final item = entry.$2;
+      final (glyph, lPct, tPct, sz, op, rot) = item;
+      return Positioned(
+        left: size.width  * lPct,
+        top:  size.height * tPct,
+        child: Transform.rotate(
+          angle: rot,
+          child: Text(
+            glyph,
+            style: GoogleFonts.nunito(
+              fontSize: sz,
+              fontWeight: FontWeight.w900,
+              color: _white.withValues(alpha: op),
             ),
           ),
-        ),
-      ],
-    )
-        .animate()
-        .scale(
-          begin: const Offset(0.95, 0.95),
-          end: const Offset(1.0, 1.0),
-          delay: const Duration(milliseconds: 2000),
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOut,
         )
-        .then()
-        .fadeOut(
-          delay: const Duration(milliseconds: 200),
-          duration: const Duration(milliseconds: 200),
-        );
+            .animate(delay: Duration(milliseconds: 300 + i * 80))
+            .fadeIn(duration: 600.ms),
+      );
+    }).toList();
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Individual arrow letter with drop-in spring animation
+// _LogoDiamond
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ArrowLetter extends StatelessWidget {
-  const _ArrowLetter({
-    required this.symbol,
-    required this.color,
-    required this.index,
-    required this.glow,
-  });
+class _LogoDiamond extends StatelessWidget {
+  const _LogoDiamond({required this.arrowsVisible});
 
-  final String symbol;
-  final Color color;
-  final int index;
-  final bool glow;
+  final int arrowsVisible;
+
+  static const double _dist = 80.0;
+  static const double _size = 260.0;
+  static const double _half = _size / 2.0;
+
+  static const List<(String, double, double)> _arrows = [
+    ('↑',  0.0,   -_dist),
+    ('→',  _dist,  0.0),
+    ('↓',  0.0,    _dist),
+    ('←', -_dist,  0.0),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final delay = Duration(milliseconds: index * 100);
-
-    Widget letter = Text(
-      symbol,
-      style: AppTypography.displayLarge.copyWith(
-        color: color,
-        fontSize: 52,
-        shadows: glow
-            ? [
-                Shadow(color: color.withAlpha(0xCC), blurRadius: 16),
-                Shadow(color: color.withAlpha(0x66), blurRadius: 32),
-              ]
-            : null,
-      ),
-    );
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: letter
-          .animate(delay: delay)
-          .slideY(
-            begin: -1.5,
-            end: 0,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.elasticOut,
-          )
-          .fadeIn(
-            duration: const Duration(milliseconds: 200),
-          ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Blinking cursor
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _BlinkingCursor extends StatelessWidget {
-  const _BlinkingCursor({required this.color});
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 3,
-      height: 32,
-      margin: const EdgeInsets.only(left: 2, top: 4),
-      color: color,
-    )
-        .animate(onPlay: (c) => c.repeat(reverse: true))
-        .fadeOut(duration: const Duration(milliseconds: 500));
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Animated loading bar
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _LoadingBar extends StatelessWidget {
-  const _LoadingBar({required this.controller});
-  final AnimationController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = Theme.of(context).extension<ArrowFlowThemeExtension>();
-    final accent = ext?.accentColor ?? MinimalistColors.accent;
-    final bg = ext?.gridLineColor ?? MinimalistColors.gridLine;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 48),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    return SizedBox(
+      width: _size,
+      height: _size,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          AnimatedBuilder(
-            animation: controller,
-            builder: (_, __) {
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: Stack(
-                  children: [
-                    // Track
-                    Container(
-                      height: 3,
-                      decoration: BoxDecoration(
-                        color: bg.withAlpha(0x55),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+          // ── Wordmark ───────────────────────────────────────────────────
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'ARROWS',
+                style: GoogleFonts.nunito(
+                  fontSize: 46,
+                  fontWeight: FontWeight.w900,
+                  color: _white,
+                  letterSpacing: 6.0,
+                  height: 1,
+                  shadows: [
+                    Shadow(
+                      color: _accentBright.withValues(alpha: 0.9),
+                      blurRadius: 24,
                     ),
-                    // Fill
-                    FractionallySizedBox(
-                      widthFactor: controller.value,
-                      child: Container(
-                        height: 3,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              accent.withAlpha(0xCC),
-                              accent,
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(4),
-                          boxShadow: [
-                            BoxShadow(
-                              color: accent.withAlpha(0x66),
-                              blurRadius: 6,
-                            ),
-                          ],
-                        ),
-                      ),
+                    Shadow(
+                      color: _accent.withValues(alpha: 0.5),
+                      blurRadius: 48,
                     ),
                   ],
                 ),
-              );
-            },
+              )
+                  .animate()
+                  .fadeIn(duration: 500.ms, curve: Curves.easeOut)
+                  .scale(
+                    begin: const Offset(0.8, 0.8),
+                    end: const Offset(1.0, 1.0),
+                    duration: 600.ms,
+                    curve: Curves.easeOut,
+                  ),
+              const SizedBox(height: 6),
+              Text(
+                'PUZZLE ESCAPE',
+                style: GoogleFonts.nunito(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _gold,
+                  letterSpacing: 4.0,
+                ),
+              ).animate(delay: 200.ms).fadeIn(duration: 400.ms),
+            ],
           ),
+
+          // ── Directional arrows ─────────────────────────────────────────
+          for (int i = 0; i < _arrows.length; i++)
+            if (i < arrowsVisible)
+              Positioned(
+                left: _half + _arrows[i].$2 - 16,
+                top:  _half + _arrows[i].$3 - 16,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: _accentBright.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _accentBright.withValues(alpha: 0.5),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _arrows[i].$1,
+                      style: GoogleFonts.nunito(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: _white,
+                        height: 1,
+                        shadows: [
+                          Shadow(
+                            color: _accentBright,
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+                    .animate()
+                    .scale(
+                      begin: const Offset(0.0, 0.0),
+                      end: const Offset(1.0, 1.0),
+                      duration: 500.ms,
+                      curve: Curves.elasticOut,
+                    )
+                    .fadeIn(duration: 200.ms),
+              ),
         ],
       ),
     );
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Particle / star-field background painter
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// A [CustomPainter] that renders 20 slowly drifting particles.
-///
-/// On the **Space** theme particles are rendered as tiny stars (white dots).
-/// On the **Neon** theme they are soft-glowing cyan dots.
-/// On other themes they are semi-transparent accent-coloured specks.
-class _ParticlePainter extends CustomPainter {
-  _ParticlePainter({
-    required this.progress,
-    required this.gradientStart,
-    required this.gradientEnd,
-    required this.isSpace,
-    required this.isNeon,
-  }) : _rand = math.Random(42);
-
-  final double progress;
-  final Color gradientStart;
-  final Color gradientEnd;
-  final bool isSpace;
-  final bool isNeon;
-  final math.Random _rand;
-
-  static const int _particleCount = 20;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Draw animated gradient background.
-    final gradPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [gradientStart, gradientEnd],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawRect(
-        Rect.fromLTWH(0, 0, size.width, size.height), gradPaint);
-
-    // Draw particles.
-    final particleColor = isSpace
-        ? Colors.white
-        : isNeon
-            ? NeonColors.primary
-            : MinimalistColors.accent;
-
-    for (var i = 0; i < _particleCount; i++) {
-      // Each particle has a pseudo-random stable base position derived
-      // from its index, then drifts slowly based on [progress].
-      final baseX = _rand.nextDouble() * size.width;
-      final baseY = _rand.nextDouble() * size.height;
-      final speed = 0.3 + _rand.nextDouble() * 0.4;
-      final radius = 1.5 + _rand.nextDouble() * 3.0;
-      final phase = _rand.nextDouble() * math.pi * 2;
-
-      final dx = math.sin(progress * math.pi * 2 * speed + phase) * 12;
-      final dy = math.cos(progress * math.pi * 2 * speed + phase * 0.7) * 8;
-
-      final alpha = (0.25 + 0.45 * math.sin(progress * math.pi * 2 + phase))
-          .clamp(0.0, 1.0);
-
-      final paint = Paint()
-        ..color = particleColor.withValues(alpha: alpha)
-        ..style = PaintingStyle.fill;
-
-      if (isSpace) {
-        // Cross / plus shape for stars.
-        final cx = baseX + dx;
-        final cy = baseY + dy;
-        canvas.drawCircle(Offset(cx, cy), radius * 0.6, paint);
-      } else if (isNeon) {
-        // Glowing dot with soft shadow.
-        final glowPaint = Paint()
-          ..color = particleColor.withValues(alpha: alpha * 0.3)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-        canvas.drawCircle(Offset(baseX + dx, baseY + dy), radius * 2, glowPaint);
-        canvas.drawCircle(Offset(baseX + dx, baseY + dy), radius, paint);
-      } else {
-        canvas.drawCircle(Offset(baseX + dx, baseY + dy), radius, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_ParticlePainter old) => old.progress != progress;
 }
