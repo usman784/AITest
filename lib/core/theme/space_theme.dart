@@ -206,11 +206,11 @@ class SpaceTheme {
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
         },
       ),
-      extensions: [
+      extensions: const [
         ArrowFlowThemeExtension(
           arrowColor: SpaceColors.arrowColor,
           gridLineColor: SpaceColors.gridLine,
-          glowColor: const Color(0x667C3AED),
+          glowColor: Color(0x667C3AED),
           backgroundGradientStart: SpaceColors.background,
           backgroundGradientEnd: SpaceColors.surface,
           isNeonTheme: false,

@@ -130,7 +130,7 @@ class WoodenTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMD),
-          borderSide: BorderSide(color: WoodenColors.gridLine),
+          borderSide: const BorderSide(color: WoodenColors.gridLine),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMD),

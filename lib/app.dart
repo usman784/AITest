@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:arrow_flow/core/constants/app_strings.dart';
 import 'package:arrow_flow/core/di/providers.dart';
 import 'package:arrow_flow/core/theme/app_theme.dart';
-import 'package:arrow_flow/core/theme/theme_notifier.dart';
 
 /// Root widget of the Arrow Flow app.
 ///

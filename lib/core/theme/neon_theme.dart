@@ -65,7 +65,7 @@ class NeonTheme {
         titleTextStyle: AppTypography.titleLarge.copyWith(
           color: NeonColors.primary,
           shadows: [
-            Shadow(
+            const Shadow(
               color: NeonColors.glowColor,
               blurRadius: 8,
             ),
@@ -161,7 +161,7 @@ class NeonTheme {
         ),
         side: const BorderSide(color: NeonColors.primary),
       ),
-      sliderTheme: SliderThemeData(
+      sliderTheme: const SliderThemeData(
         activeTrackColor: NeonColors.primary,
         inactiveTrackColor: NeonColors.gridLine,
         thumbColor: NeonColors.primary,
@@ -209,13 +209,13 @@ class NeonTheme {
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
         },
       ),
-      extensions: [
+      extensions: const [
         ArrowFlowThemeExtension(
           arrowColor: NeonColors.arrowColor,
           gridLineColor: NeonColors.gridLine,
           glowColor: NeonColors.glowColor,
           backgroundGradientStart: NeonColors.background,
-          backgroundGradientEnd: const Color(0xFF0D0D1F),
+          backgroundGradientEnd: Color(0xFF0D0D1F),
           isNeonTheme: true,
           isSpaceTheme: false,
           isWoodenTheme: false,

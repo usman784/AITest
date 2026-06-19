@@ -9,14 +9,9 @@ import 'package:arrow_flow/core/constants/app_colors.dart';
 import 'package:arrow_flow/core/constants/app_typography.dart';
 import 'package:arrow_flow/core/di/providers.dart';
 import 'package:arrow_flow/core/theme/theme_extension.dart';
-
-// ── SharedPreferences keys shared across the app ──────────────────────────────
-
-/// Set to `'true'` once the user completes the onboarding flow.
-const String kOnboardingComplete = 'onboarding_complete';
-
-/// Set to `'true'` once a user profile (nickname + avatar) has been saved.
-const String kUserProfileExists = 'user_profile_exists';
+// kOnboardingComplete and kUserProfileExists are the source of truth here:
+import 'package:arrow_flow/features/onboarding/onboarding_provider.dart'
+    show kOnboardingComplete, kUserProfileExists;
 
 // ── Arrow symbols displayed in the logo ──────────────────────────────────────
 
