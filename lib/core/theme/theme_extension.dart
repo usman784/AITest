@@ -23,6 +23,9 @@ class ArrowFlowThemeExtension
     required this.successColor,
     required this.errorColor,
     required this.accentColor,
+    required this.sketchStrokeColor,
+    required this.meteorColor,
+    required this.starFieldColor,
   });
 
   /// Colour used to paint arrow symbols.
@@ -61,6 +64,15 @@ class ArrowFlowThemeExtension
   /// Primary accent colour.
   final Color accentColor;
 
+  /// Stroke colour used when rendering sketch/doodle-style outlines.
+  final Color sketchStrokeColor;
+
+  /// Colour of animated meteors / shooting stars (Space theme only).
+  final Color meteorColor;
+
+  /// Colour of static star-field particles (Space theme only).
+  final Color starFieldColor;
+
   @override
   ArrowFlowThemeExtension copyWith({
     Color? arrowColor,
@@ -75,6 +87,9 @@ class ArrowFlowThemeExtension
     Color? successColor,
     Color? errorColor,
     Color? accentColor,
+    Color? sketchStrokeColor,
+    Color? meteorColor,
+    Color? starFieldColor,
   }) {
     return ArrowFlowThemeExtension(
       arrowColor: arrowColor ?? this.arrowColor,
@@ -91,6 +106,9 @@ class ArrowFlowThemeExtension
       successColor: successColor ?? this.successColor,
       errorColor: errorColor ?? this.errorColor,
       accentColor: accentColor ?? this.accentColor,
+      sketchStrokeColor: sketchStrokeColor ?? this.sketchStrokeColor,
+      meteorColor: meteorColor ?? this.meteorColor,
+      starFieldColor: starFieldColor ?? this.starFieldColor,
     );
   }
 
@@ -115,6 +133,10 @@ class ArrowFlowThemeExtension
       successColor: Color.lerp(successColor, other.successColor, t)!,
       errorColor: Color.lerp(errorColor, other.errorColor, t)!,
       accentColor: Color.lerp(accentColor, other.accentColor, t)!,
+      sketchStrokeColor:
+          Color.lerp(sketchStrokeColor, other.sketchStrokeColor, t)!,
+      meteorColor: Color.lerp(meteorColor, other.meteorColor, t)!,
+      starFieldColor: Color.lerp(starFieldColor, other.starFieldColor, t)!,
     );
   }
 
@@ -135,6 +157,9 @@ class ArrowFlowThemeExtension
         successColor: MinimalistColors.success,
         errorColor: MinimalistColors.error,
         accentColor: MinimalistColors.accent,
+        sketchStrokeColor: MinimalistColors.gridLine,
+        meteorColor: Colors.transparent,
+        starFieldColor: Colors.transparent,
       );
 
   /// Extension values for the Neon visual style.
@@ -152,6 +177,9 @@ class ArrowFlowThemeExtension
         successColor: NeonColors.success,
         errorColor: NeonColors.error,
         accentColor: NeonColors.accent,
+        sketchStrokeColor: NeonColors.gridLine,
+        meteorColor: Colors.transparent,
+        starFieldColor: Colors.transparent,
       );
 
   /// Extension values for the Wooden visual style.
@@ -169,6 +197,9 @@ class ArrowFlowThemeExtension
         successColor: WoodenColors.success,
         errorColor: WoodenColors.error,
         accentColor: WoodenColors.accent,
+        sketchStrokeColor: WoodenColors.gridLine,
+        meteorColor: Colors.transparent,
+        starFieldColor: Colors.transparent,
       );
 
   /// Extension values for the Sketch visual style.
@@ -186,6 +217,9 @@ class ArrowFlowThemeExtension
         successColor: SketchColors.success,
         errorColor: SketchColors.error,
         accentColor: SketchColors.accent,
+        sketchStrokeColor: SketchColors.sketchStroke,
+        meteorColor: Colors.transparent,
+        starFieldColor: Colors.transparent,
       );
 
   /// Extension values for the Space visual style.
@@ -203,5 +237,8 @@ class ArrowFlowThemeExtension
         successColor: SpaceColors.success,
         errorColor: SpaceColors.error,
         accentColor: SpaceColors.accent,
+        sketchStrokeColor: SpaceColors.gridLine,
+        meteorColor: SpaceColors.meteorColor,
+        starFieldColor: SpaceColors.starField,
       );
 }

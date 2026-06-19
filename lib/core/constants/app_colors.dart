@@ -47,6 +47,8 @@ class WoodenColors {
   static const Color textPrimary = Color(0xFF3E1C00);
   static const Color textSecondary = Color(0xFF7A5230);
   static const Color gridLine = Color(0xFFC8A060);
+  /// Semi-transparent overlay that simulates a wood-grain texture.
+  static const Color grainOverlay = Color(0x0D000000);
 }
 
 /// Colour palette for the Sketch / Doodle visual style.
@@ -61,6 +63,10 @@ class SketchColors {
   static const Color error = Color(0xFFE74C3C);
   static const Color arrowColor = Color(0xFF1A1A1A);
   static const Color paperTexture = Color(0xFFFAF9F0);
+  /// Ink colour used for sketch-style stroke rendering.
+  static const Color inkColor = Color(0xFF2C2C2C);
+  /// Stroke colour for the outer sketch outline.
+  static const Color sketchStroke = Color(0xFF333333);
   static const Color textPrimary = Color(0xFF1A1A1A);
   static const Color textSecondary = Color(0xFF555555);
   static const Color gridLine = Color(0xFFCCCCAA);
@@ -79,6 +85,8 @@ class SpaceColors {
   static const Color nebula1 = Color(0xFF7C3AED);
   static const Color nebula2 = Color(0xFF1D4ED8);
   static const Color starField = Color(0xFFFFFFFF);
+  /// Colour of the animated meteor / shooting-star effect.
+  static const Color meteorColor = Color(0xFFFCD34D);
   static const Color arrowColor = Color(0xFFE2E8F0);
   static const Color gridLine = Color(0xFF1E2040);
   static const Color textPrimary = Color(0xFFE2E8F0);

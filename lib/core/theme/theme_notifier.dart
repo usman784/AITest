@@ -116,15 +116,16 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
 
 /// Riverpod provider for [ThemeNotifier].
 ///
-/// Depends on [sharedPreferencesProvider] which must be overridden in
-/// [ProviderScope] before the app starts (done in [main]).
-final themeNotifierProvider =
+/// **Do not use this directly.** Use [themeProvider] from
+/// `lib/core/di/providers.dart`, which correctly wires up the
+/// [SharedPreferences] dependency via a ProviderScope override.
+///
+/// This stub is kept for completeness but will throw if called without the
+/// override — see `lib/core/di/providers.dart` for the real provider.
+// ignore: unused_element
+final _themeNotifierStubProvider =
     StateNotifierProvider<ThemeNotifier, ThemeState>((ref) {
-  // SharedPreferences is provided via override in main.dart / ProviderScope.
-  // If you call this before the override is set up, it will throw — which is
-  // the correct behaviour (fail fast).
   throw UnimplementedError(
-    'sharedPreferencesProvider must be overridden before themeNotifierProvider '
-    'can be used. See lib/core/di/providers.dart.',
+    'Use themeProvider from lib/core/di/providers.dart instead.',
   );
 });
