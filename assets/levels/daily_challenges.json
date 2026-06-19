@@ -1,0 +1,71 @@
+{
+  "world": 99,
+  "name": "Daily Challenges",
+  "theme": "minimalist",
+  "levels": [
+    {
+      "id": 9001,
+      "worldId": 99,
+      "difficulty": "medium",
+      "gridShape": "square",
+      "gridSize": 5,
+      "arrows": [
+        {"id": 1, "row": 0, "col": 0, "direction": "right"},
+        {"id": 2, "row": 0, "col": 4, "direction": "down"},
+        {"id": 3, "row": 4, "col": 4, "direction": "left"},
+        {"id": 4, "row": 4, "col": 0, "direction": "up"},
+        {"id": 5, "row": 2, "col": 2, "direction": "right"},
+        {"id": 6, "row": 2, "col": 4, "direction": "up"},
+        {"id": 7, "row": 1, "col": 2, "direction": "down"}
+      ],
+      "solution": [7, 6, 2, 1, 5, 4, 3],
+      "par": 7,
+      "coinReward": 50,
+      "xpReward": 75
+    },
+    {
+      "id": 9002,
+      "worldId": 99,
+      "difficulty": "hard",
+      "gridShape": "square",
+      "gridSize": 6,
+      "arrows": [
+        {"id": 1, "row": 0, "col": 0, "direction": "right"},
+        {"id": 2, "row": 0, "col": 5, "direction": "down"},
+        {"id": 3, "row": 5, "col": 5, "direction": "left"},
+        {"id": 4, "row": 5, "col": 0, "direction": "up"},
+        {"id": 5, "row": 2, "col": 2, "direction": "right"},
+        {"id": 6, "row": 2, "col": 4, "direction": "down"},
+        {"id": 7, "row": 4, "col": 3, "direction": "left"},
+        {"id": 8, "row": 3, "col": 1, "direction": "up"}
+      ],
+      "solution": [5, 6, 7, 8, 1, 2, 3, 4],
+      "par": 8,
+      "coinReward": 50,
+      "xpReward": 75
+    },
+    {
+      "id": 9003,
+      "worldId": 99,
+      "difficulty": "expert",
+      "gridShape": "square",
+      "gridSize": 7,
+      "arrows": [
+        {"id": 1, "row": 0, "col": 0, "direction": "right"},
+        {"id": 2, "row": 0, "col": 6, "direction": "down"},
+        {"id": 3, "row": 6, "col": 6, "direction": "left"},
+        {"id": 4, "row": 6, "col": 0, "direction": "up"},
+        {"id": 5, "row": 2, "col": 2, "direction": "right"},
+        {"id": 6, "row": 2, "col": 5, "direction": "down"},
+        {"id": 7, "row": 5, "col": 4, "direction": "left"},
+        {"id": 8, "row": 4, "col": 1, "direction": "up"},
+        {"id": 9, "row": 3, "col": 3, "direction": "right"},
+        {"id": 10, "row": 1, "col": 4, "direction": "down"}
+      ],
+      "solution": [9, 5, 6, 7, 8, 10, 1, 2, 3, 4],
+      "par": 10,
+      "coinReward": 50,
+      "xpReward": 75
+    }
+  ]
+}
