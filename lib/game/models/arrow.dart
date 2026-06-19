@@ -32,6 +32,7 @@ class Arrow extends Equatable {
     this.isSelected = false,
     this.isMoving = false,
     this.isCleared = false,
+    this.isSliding = false,
     this.skinStyle = ArrowSkinStyle.defaultStyle,
     this.colorblindPattern = ColorblindPattern.none,
   });
@@ -57,6 +58,9 @@ class Arrow extends Equatable {
   /// Whether this arrow has exited the grid and been cleared.
   final bool isCleared;
 
+  /// Whether this arrow is currently sliding off the grid (animation in progress).
+  final bool isSliding;
+
   /// The visual skin applied to this arrow.
   final ArrowSkinStyle skinStyle;
 
@@ -72,6 +76,7 @@ class Arrow extends Equatable {
     bool? isSelected,
     bool? isMoving,
     bool? isCleared,
+    bool? isSliding,
     ArrowSkinStyle? skinStyle,
     ColorblindPattern? colorblindPattern,
   }) {
@@ -83,6 +88,7 @@ class Arrow extends Equatable {
       isSelected: isSelected ?? this.isSelected,
       isMoving: isMoving ?? this.isMoving,
       isCleared: isCleared ?? this.isCleared,
+      isSliding: isSliding ?? this.isSliding,
       skinStyle: skinStyle ?? this.skinStyle,
       colorblindPattern: colorblindPattern ?? this.colorblindPattern,
     );
@@ -97,6 +103,7 @@ class Arrow extends Equatable {
         isSelected,
         isMoving,
         isCleared,
+        isSliding,
         skinStyle,
         colorblindPattern,
       ];

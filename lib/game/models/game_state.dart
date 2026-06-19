@@ -40,6 +40,7 @@ final class GamePlaying extends GameStatus {
     this.elapsedTime = Duration.zero,
     this.replayMoves = const [],
     this.isPaused = false,
+    this.hoveredArrowId,
   });
 
   /// The 2-D grid, row-major order. Cells can be `null` (empty).
@@ -78,6 +79,9 @@ final class GamePlaying extends GameStatus {
   /// Whether the game is paused.
   final bool isPaused;
 
+  /// The arrow the player is currently hovering/touching — used for path preview.
+  final int? hoveredArrowId;
+
   /// Returns a copy with the given fields replaced.
   GamePlaying copyWith({
     List<List<Arrow?>>? grid,
@@ -95,6 +99,8 @@ final class GamePlaying extends GameStatus {
     Duration? elapsedTime,
     List<int>? replayMoves,
     bool? isPaused,
+    int? hoveredArrowId,
+    bool clearHoveredArrow = false,
   }) {
     return GamePlaying(
       grid: grid ?? this.grid,
@@ -112,6 +118,8 @@ final class GamePlaying extends GameStatus {
       elapsedTime: elapsedTime ?? this.elapsedTime,
       replayMoves: replayMoves ?? this.replayMoves,
       isPaused: isPaused ?? this.isPaused,
+      hoveredArrowId:
+          clearHoveredArrow ? null : (hoveredArrowId ?? this.hoveredArrowId),
     );
   }
 
@@ -128,6 +136,7 @@ final class GamePlaying extends GameStatus {
         elapsedTime,
         replayMoves,
         isPaused,
+        hoveredArrowId,
       ];
 }
 

@@ -20,10 +20,9 @@ class GameNotifier extends StateNotifier<GameStatus> {
 
   LevelData? _currentLevel;
   Timer? _ticker;
-  int _nextSolutionIdx = 0;
-  List<int> _solution = [];
 
-  // ── Public accessors ──────────────────────────────────────────────────────
+  /// Prevents simultaneous slide animations.
+  bool _isAnimating = false;
 
   LevelData? get currentLevel => _currentLevel;
 
@@ -59,8 +58,8 @@ class GameNotifier extends StateNotifier<GameStatus> {
 
   void _startGame(LevelData levelData) {
     _currentLevel = levelData;
-    _solution = List.unmodifiable(levelData.solution);
-    _nextSolutionIdx = 0;
+    _isAnimating = false;
+    _stopTicker();
 
     final arrows = levelData.arrows.map(_arrowFromData).toList();
     final grid = _buildGrid(levelData.gridSize, arrows);
@@ -75,110 +74,206 @@ class GameNotifier extends StateNotifier<GameStatus> {
     _startTicker();
   }
 
-  // ── Player actions ────────────────────────────────────────────────────────
+  // ── Tap mechanic: slide arrow off grid ───────────────────────────────────
 
   void tapArrow(int arrowId) {
     if (state is! GamePlaying) return;
+    if (_isAnimating) return;
     final playing = state as GamePlaying;
     if (playing.isPaused || playing.isComplete) return;
 
-    final isCorrect = _nextSolutionIdx < _solution.length &&
-        _solution[_nextSolutionIdx] == arrowId;
+    // Find the tapped arrow (skip already-sliding ones).
+    Arrow? tapped;
+    for (final a in playing.arrows) {
+      if (a.id == arrowId && !a.isSliding) {
+        tapped = a;
+        break;
+      }
+    }
+    if (tapped == null) return;
 
-    if (isCorrect) {
-      _onCorrectTap(playing, arrowId);
+    if (canSlide(tapped, playing.grid)) {
+      _slideArrow(playing, tapped);
     } else {
-      _onWrongTap(playing, arrowId);
+      _showBlocked(playing, tapped);
     }
   }
 
-  void _onCorrectTap(GamePlaying playing, int arrowId) {
+  /// Returns `true` when the path from [arrow] to the grid edge is fully clear.
+  ///
+  /// Ignores cells whose arrow is already sliding (treated as vacated).
+  static bool canSlide(Arrow arrow, List<List<Arrow?>> grid) {
+    final size = grid.length;
+    switch (arrow.direction) {
+      case ArrowDirection.up:
+        for (int r = arrow.row - 1; r >= 0; r--) {
+          final cell = grid[r][arrow.col];
+          if (cell != null && !cell.isSliding) return false;
+        }
+        return true;
+      case ArrowDirection.down:
+        for (int r = arrow.row + 1; r < size; r++) {
+          final cell = grid[r][arrow.col];
+          if (cell != null && !cell.isSliding) return false;
+        }
+        return true;
+      case ArrowDirection.left:
+        for (int c = arrow.col - 1; c >= 0; c--) {
+          final cell = grid[arrow.row][c];
+          if (cell != null && !cell.isSliding) return false;
+        }
+        return true;
+      case ArrowDirection.right:
+        for (int c = arrow.col + 1; c < size; c++) {
+          final cell = grid[arrow.row][c];
+          if (cell != null && !cell.isSliding) return false;
+        }
+        return true;
+    }
+  }
+
+  /// Returns the list of cell coords the arrow passes through on its way out,
+  /// not including its own cell. Used for path-preview rendering.
+  static List<(int row, int col)> pathCells(Arrow arrow, List<List<Arrow?>> grid) {
+    final size = grid.length;
+    final cells = <(int, int)>[];
+    switch (arrow.direction) {
+      case ArrowDirection.up:
+        for (int r = arrow.row - 1; r >= 0; r--) {
+          cells.add((r, arrow.col));
+        }
+      case ArrowDirection.down:
+        for (int r = arrow.row + 1; r < size; r++) {
+          cells.add((r, arrow.col));
+        }
+      case ArrowDirection.left:
+        for (int c = arrow.col - 1; c >= 0; c--) {
+          cells.add((arrow.row, c));
+        }
+      case ArrowDirection.right:
+        for (int c = arrow.col + 1; c < size; c++) {
+          cells.add((arrow.row, c));
+        }
+    }
+    return cells;
+  }
+
+  /// Animate the arrow sliding off the grid, then remove it from state.
+  Future<void> _slideArrow(GamePlaying playing, Arrow arrow) async {
+    _isAnimating = true;
     HapticHelper.onArrowSelect();
+    _playDirectionalSfx(arrow.direction);
 
-    final tapped = playing.arrows.firstWhere((a) => a.id == arrowId);
-    _playDirectionalSfx(tapped.direction);
+    // 1. Mark as sliding + remove from grid immediately (it has vacated).
+    final slidingArrow = arrow.copyWith(isSliding: true);
+    final withSliding = playing.arrows
+        .map((a) => a.id == arrow.id ? slidingArrow : a)
+        .toList();
+    // Grid is rebuilt WITHOUT the sliding arrow so subsequent canSlide checks
+    // see this cell as empty.
+    final gridWithout = _buildGrid(
+      playing.grid.length,
+      playing.arrows.where((a) => a.id != arrow.id).toList(),
+    );
+    state = playing.copyWith(
+      arrows: withSliding,
+      grid: gridWithout,
+      clearHintArrow: true,
+      clearHoveredArrow: true,
+    );
 
-    _nextSolutionIdx++;
+    // 2. Wait for the slide animation to finish.
+    await Future.delayed(const Duration(milliseconds: 380));
 
-    final newArrows =
-        playing.arrows.where((a) => a.id != arrowId).toList();
-    final newGrid = _buildGrid(_currentLevel!.gridSize, newArrows);
-    final newMoves = playing.moveCount + 1;
+    _isAnimating = false;
+    if (state is! GamePlaying) return;
+    final current = state as GamePlaying;
 
-    if (newArrows.isEmpty) {
-      // ── Level complete ─────────────────────────────────────────────────
+    // 3. Fully remove the arrow.
+    final remaining = current.arrows.where((a) => a.id != arrow.id).toList();
+    final newGrid = _buildGrid(current.grid.length, remaining);
+    final newMoves = current.moveCount + 1;
+
+    if (remaining.isEmpty) {
+      // ── Level complete ──────────────────────────────────────────────────
       _stopTicker();
       HapticHelper.onLevelComplete();
       _audio.playSfx(SoundEffect.levelComplete);
 
       final stars = _calcStars(newMoves, _currentLevel!.par);
       state = GameComplete(
-        finalState: playing.copyWith(
-          arrows: newArrows,
+        finalState: current.copyWith(
+          arrows: remaining,
           grid: newGrid,
           moveCount: newMoves,
           isComplete: true,
-          clearHintArrow: true,
         ),
         stars: stars,
         coinsEarned: _currentLevel!.coinReward,
         xpEarned: _currentLevel!.xpReward,
       );
     } else {
-      state = playing.copyWith(
-        arrows: newArrows,
+      state = current.copyWith(
+        arrows: remaining,
         grid: newGrid,
         moveCount: newMoves,
-        clearErrorArrow: true,
-        clearHintArrow: true,
       );
     }
   }
 
-  void _onWrongTap(GamePlaying playing, int arrowId) {
+  /// Shows a blocked shake animation — the arrow cannot slide yet.
+  void _showBlocked(GamePlaying playing, Arrow arrow) {
     HapticHelper.onWrongTap();
     _audio.playSfx(SoundEffect.tapError);
 
-    final errorArrow = playing.arrows.firstWhere(
-      (a) => a.id == arrowId,
-      orElse: () => playing.arrows.first,
-    );
+    state = playing.copyWith(errorArrow: arrow);
+    Future.delayed(const Duration(milliseconds: 650), () {
+      if (state is GamePlaying) {
+        state = (state as GamePlaying).copyWith(clearErrorArrow: true);
+      }
+    });
+  }
 
-    final newLives = playing.livesRemaining - 1;
+  // ── Hover / path preview ─────────────────────────────────────────────────
 
-    if (newLives <= 0) {
-      _stopTicker();
-      HapticHelper.onLifeLost();
-      _audio.playSfx(SoundEffect.lifeLost);
-      state = GameOver(finalState: playing.copyWith(livesRemaining: 0));
-    } else {
-      HapticHelper.onLifeLost();
-      _audio.playSfx(SoundEffect.lifeLost);
-      state = playing.copyWith(livesRemaining: newLives, errorArrow: errorArrow);
+  void startHover(int arrowId) {
+    if (state is! GamePlaying || _isAnimating) return;
+    state = (state as GamePlaying).copyWith(hoveredArrowId: arrowId);
+  }
 
-      // Auto-clear error indicator after the shake animation finishes.
-      Future.delayed(const Duration(milliseconds: 700), () {
-        if (state is GamePlaying) {
-          state = (state as GamePlaying).copyWith(clearErrorArrow: true);
-        }
-      });
+  void endHover() {
+    if (state is GamePlaying) {
+      state = (state as GamePlaying).copyWith(clearHoveredArrow: true);
     }
   }
+
+  // ── Hint ─────────────────────────────────────────────────────────────────
 
   void useHint() {
     if (state is! GamePlaying) return;
     final playing = state as GamePlaying;
-    if (playing.hintCount <= 0 || _nextSolutionIdx >= _solution.length) return;
+    if (playing.hintCount <= 0 || _isAnimating) return;
+
+    // Find any arrow that can currently slide.
+    Arrow? slideable;
+    for (final a in playing.arrows) {
+      if (!a.isSliding && canSlide(a, playing.grid)) {
+        slideable = a;
+        break;
+      }
+    }
+    if (slideable == null) return;
 
     HapticHelper.onHintUsed();
     _audio.playSfx(SoundEffect.hintChime);
 
-    final hintId = _solution[_nextSolutionIdx];
     state = playing.copyWith(
       hintCount: playing.hintCount - 1,
-      hintArrowId: hintId,
+      hintArrowId: slideable.id,
     );
   }
+
+  // ── Pause / Resume / Restart ─────────────────────────────────────────────
 
   void pause() {
     if (state is! GamePlaying) return;
@@ -194,6 +289,7 @@ class GameNotifier extends StateNotifier<GameStatus> {
 
   Future<void> restart() async {
     _stopTicker();
+    _isAnimating = false;
     if (_currentLevel != null) _startGame(_currentLevel!);
   }
 
@@ -205,7 +301,9 @@ class GameNotifier extends StateNotifier<GameStatus> {
       if (state is GamePlaying) {
         final p = state as GamePlaying;
         if (!p.isPaused && !p.isComplete) {
-          state = p.copyWith(elapsedTime: p.elapsedTime + const Duration(seconds: 1));
+          state = p.copyWith(
+            elapsedTime: p.elapsedTime + const Duration(seconds: 1),
+          );
         }
       }
     });
@@ -219,7 +317,7 @@ class GameNotifier extends StateNotifier<GameStatus> {
     super.dispose();
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Static helpers ────────────────────────────────────────────────────────
 
   static Arrow _arrowFromData(ArrowData data) => Arrow(
         id: data.id,
@@ -241,6 +339,8 @@ class GameNotifier extends StateNotifier<GameStatus> {
     }
   }
 
+  /// Builds a row-major grid from a flat arrow list.
+  /// Sliding arrows are NOT placed in the grid (their cell is treated as empty).
   static List<List<Arrow?>> _buildGrid(int size, List<Arrow> arrows) {
     final grid = List.generate(
       size,
@@ -248,7 +348,9 @@ class GameNotifier extends StateNotifier<GameStatus> {
       growable: false,
     );
     for (final a in arrows) {
-      if (a.row < size && a.col < size) grid[a.row][a.col] = a;
+      if (!a.isSliding && a.row < size && a.col < size) {
+        grid[a.row][a.col] = a;
+      }
     }
     return grid;
   }
@@ -281,3 +383,6 @@ final gameProvider =
   final audio = ref.watch(audioServiceProvider);
   return GameNotifier(repo, audio);
 });
+
+
+// ── Notifier ──────────────────────────────────────────────────────────────────
