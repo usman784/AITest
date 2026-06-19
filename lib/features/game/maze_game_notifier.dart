@@ -1,7 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:arrow_flow/core/di/providers.dart';
+import 'package:arrow_flow/core/utils/audio_helper.dart';
+import 'package:arrow_flow/features/settings/settings_provider.dart';
 import 'package:arrow_flow/game/data/maze_level_repository.dart';
 import 'package:arrow_flow/game/logic/hint_engine.dart';
 import 'package:arrow_flow/game/logic/path_checker.dart';
@@ -12,19 +16,34 @@ import 'package:arrow_flow/features/game/maze_game_state.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class MazeGameNotifier extends StateNotifier<MazeGameState> {
-  MazeGameNotifier() : super(const MazeGameState());
+  MazeGameNotifier(this._ref) : super(const MazeGameState());
 
+  final Ref _ref;
   Timer? _ticker;
+
+  // ── Convenience accessors ─────────────────────────────────────────────────
+
+  AudioService get _audio       => _ref.read(audioServiceProvider);
+  bool get _hapticsEnabled      => _ref.read(settingsProvider).hapticsEnabled;
+
+  void _haptic(void Function() fn) {
+    if (_hapticsEnabled) fn();
+  }
 
   // ── Load ──────────────────────────────────────────────────────────────────
 
   Future<void> loadLevel(int packId, int levelId) async {
     state = const MazeGameState(phase: MazeGamePhase.loading);
+
+    // Stop any ambient already playing from a previous level.
+    unawaited(_audio.stopAmbient());
+
     final levelData = await MazeLevelRepository.loadLevel(packId, levelId);
     if (levelData == null) {
       // No JSON for this pack/level yet — remain on loading screen.
       return;
     }
+
     final pathResult = PathChecker.check(levelData.layout);
     state = MazeGameState(
       phase:      MazeGamePhase.playing,
@@ -32,7 +51,12 @@ class MazeGameNotifier extends StateNotifier<MazeGameState> {
       levelData:  levelData,
       pathResult: pathResult,
     );
+
     _startTicker();
+
+    // Load arcade SFX pack and start ambient music.
+    await _audio.loadSoundPack(SoundPack.arcade);
+    unawaited(_audio.playAmbient(AmbientTrack.lofi));
   }
 
   // ── Player actions ────────────────────────────────────────────────────────
@@ -51,6 +75,12 @@ class MazeGameNotifier extends StateNotifier<MazeGameState> {
 
     if (pathResult.isSolved) {
       _stopTicker();
+
+      // Level complete: play win chime + strong haptic.
+      unawaited(_audio.playSfx(SoundEffect.levelComplete));
+      unawaited(_audio.stopAmbient());
+      _haptic(HapticFeedback.heavyImpact);
+
       state = state.copyWith(
         layout:          newLayout,
         pathResult:      pathResult,
@@ -60,6 +90,10 @@ class MazeGameNotifier extends StateNotifier<MazeGameState> {
         clearHint:       true,
       );
     } else {
+      // Regular tap: click sound + selection haptic.
+      unawaited(_audio.playSfx(SoundEffect.tapSuccess));
+      _haptic(HapticFeedback.selectionClick);
+
       state = state.copyWith(
         layout:          newLayout,
         pathResult:      pathResult,
@@ -80,8 +114,13 @@ class MazeGameNotifier extends StateNotifier<MazeGameState> {
     final layout = state.layout;
     if (layout == null || !state.isPlaying) return;
     final hintNodeId = HintEngine.suggest(layout);
+
+    // Hint chime + light haptic.
+    unawaited(_audio.playSfx(SoundEffect.hintChime));
+    _haptic(HapticFeedback.lightImpact);
+
     state = state.copyWith(
-      hintsUsed: state.hintsUsed + 1,
+      hintsUsed:  state.hintsUsed + 1,
       hintNodeId: hintNodeId,
     );
   }
@@ -89,12 +128,14 @@ class MazeGameNotifier extends StateNotifier<MazeGameState> {
   void pause() {
     if (!state.isPlaying) return;
     _stopTicker();
+    unawaited(_audio.pauseAmbient());
     state = state.copyWith(phase: MazeGamePhase.paused);
   }
 
   void resume() {
     if (!state.isPaused) return;
     state = state.copyWith(phase: MazeGamePhase.playing);
+    unawaited(_audio.resumeAmbient());
     _startTicker();
   }
 
@@ -102,6 +143,8 @@ class MazeGameNotifier extends StateNotifier<MazeGameState> {
     final levelData = state.levelData;
     if (levelData == null) return;
     _stopTicker();
+    unawaited(_audio.stopAmbient());
+
     final pathResult = PathChecker.check(levelData.layout);
     state = MazeGameState(
       phase:      MazeGamePhase.playing,
@@ -110,6 +153,7 @@ class MazeGameNotifier extends StateNotifier<MazeGameState> {
       pathResult: pathResult,
     );
     _startTicker();
+    unawaited(_audio.playAmbient(AmbientTrack.lofi));
   }
 
   // ── Timer ────────────────────────────────────────────────────────────────
@@ -130,6 +174,7 @@ class MazeGameNotifier extends StateNotifier<MazeGameState> {
   @override
   void dispose() {
     _stopTicker();
+    unawaited(_audio.stopAmbient());
     super.dispose();
   }
 }
@@ -138,5 +183,5 @@ class MazeGameNotifier extends StateNotifier<MazeGameState> {
 
 final mazeGameProvider =
     StateNotifierProvider.autoDispose<MazeGameNotifier, MazeGameState>(
-  (ref) => MazeGameNotifier(),
+  (ref) => MazeGameNotifier(ref),
 );

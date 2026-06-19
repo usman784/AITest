@@ -1,72 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:arrow_flow/core/constants/app_colors.dart';
 import 'package:arrow_flow/core/constants/app_dimensions.dart';
 import 'package:arrow_flow/core/constants/app_typography.dart';
-import 'package:arrow_flow/core/di/providers.dart';
-
-// ── SP keys ───────────────────────────────────────────────────────────────────
-
-const String kArrowsSoundEnabled   = 'arrows_sound_enabled';
-const String kArrowsHapticsEnabled = 'arrows_haptics_enabled';
-
-// ── SettingsState ─────────────────────────────────────────────────────────────
-
-class SettingsState {
-  const SettingsState({
-    this.soundEnabled   = true,
-    this.hapticsEnabled = true,
-  });
-
-  final bool soundEnabled;
-  final bool hapticsEnabled;
-
-  SettingsState copyWith({bool? soundEnabled, bool? hapticsEnabled}) {
-    return SettingsState(
-      soundEnabled:   soundEnabled   ?? this.soundEnabled,
-      hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
-    );
-  }
-}
-
-// ── SettingsNotifier ──────────────────────────────────────────────────────────
-
-class SettingsNotifier extends StateNotifier<SettingsState> {
-  SettingsNotifier(this._prefs) : super(const SettingsState()) {
-    _load();
-  }
-
-  final SharedPreferences _prefs;
-
-  void _load() {
-    state = SettingsState(
-      soundEnabled:   _prefs.getBool(kArrowsSoundEnabled)   ?? true,
-      hapticsEnabled: _prefs.getBool(kArrowsHapticsEnabled) ?? true,
-    );
-  }
-
-  Future<void> toggleSound() async {
-    final next = !state.soundEnabled;
-    await _prefs.setBool(kArrowsSoundEnabled, next);
-    state = state.copyWith(soundEnabled: next);
-  }
-
-  Future<void> toggleHaptics() async {
-    final next = !state.hapticsEnabled;
-    await _prefs.setBool(kArrowsHapticsEnabled, next);
-    state = state.copyWith(hapticsEnabled: next);
-  }
-}
-
-// ── Provider ──────────────────────────────────────────────────────────────────
-
-final settingsProvider =
-    StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
-  return SettingsNotifier(ref.watch(sharedPreferencesProvider));
-});
+import 'package:arrow_flow/features/settings/settings_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SettingsScreen

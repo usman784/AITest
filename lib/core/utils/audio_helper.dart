@@ -77,6 +77,20 @@ class AudioService {
     await _ambientPlayer.stop();
   }
 
+  /// Pauses the ambient track (position is retained so [resumeAmbient] can
+  /// continue from the same point).
+  Future<void> pauseAmbient() async {
+    await _ambientPlayer.pause();
+  }
+
+  /// Resumes a previously paused ambient track.
+  ///
+  /// No-ops when music is disabled.
+  Future<void> resumeAmbient() async {
+    if (!_musicEnabled) return;
+    await _ambientPlayer.resume();
+  }
+
   /// Sets SFX playback volume in the range [0.0, 1.0].
   void setSfxVolume(double volume) {
     _sfxVolume = volume.clamp(0.0, 1.0);
