@@ -13,6 +13,7 @@ import 'package:arrow_flow/features/settings/settings_screen.dart';
 import 'package:arrow_flow/features/skin_shop/skin_shop_screen.dart';
 import 'package:arrow_flow/features/achievements/achievements_screen.dart';
 import 'package:arrow_flow/features/leaderboard/leaderboard_screen.dart';
+import 'package:arrow_flow/features/win/maze_win_screen.dart';
 
 /// Riverpod [Provider] that exposes the application-level [GoRouter].
 ///
@@ -106,6 +107,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => MazeGameScreen(
           packId:  int.tryParse(state.pathParameters['packId']  ?? '') ?? 1,
           levelId: int.tryParse(state.pathParameters['levelId'] ?? '') ?? 1,
+        ),
+      ),
+      GoRoute(
+        path: '/win-maze/:packId/:levelId',
+        pageBuilder: (_, state) => CustomTransitionPage<void>(
+          child: MazeWinScreen(
+            data: state.extra is MazeWinData
+                ? state.extra as MazeWinData
+                : MazeWinData(
+                    packId:         int.tryParse(state.pathParameters['packId']  ?? '') ?? 1,
+                    levelId:        int.tryParse(state.pathParameters['levelId'] ?? '') ?? 1,
+                    stars:          1,
+                    moveCount:      0,
+                    par:            1,
+                    elapsedSeconds: 0,
+                  ),
+          ),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
         ),
       ),
     ],

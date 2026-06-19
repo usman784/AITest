@@ -12,6 +12,7 @@ import 'package:arrow_flow/features/game/maze_game_state.dart';
 import 'package:arrow_flow/features/game/maze_painter.dart';
 import 'package:arrow_flow/features/level_select/pack_level_select_provider.dart';
 import 'package:arrow_flow/features/home/home_provider.dart';
+import 'package:arrow_flow/features/win/maze_win_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MazeGameScreen
@@ -91,8 +92,19 @@ class _MazeGameScreenState extends ConsumerState<MazeGameScreen>
 
     if (!mounted) return;
     // Brief delay so the completion animation plays.
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (mounted) context.go('/home');
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    context.go(
+      '/win-maze/${widget.packId}/${widget.levelId}',
+      extra: MazeWinData(
+        packId:         widget.packId,
+        levelId:        widget.levelId,
+        stars:          state.stars,
+        moveCount:      state.moveCount,
+        par:            state.levelData?.par ?? 1,
+        elapsedSeconds: state.elapsedSeconds,
+      ),
+    );
   }
 
   @override
