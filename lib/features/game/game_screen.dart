@@ -10,6 +10,7 @@ import 'package:arrow_flow/features/game/widgets/game_hud.dart';
 import 'package:arrow_flow/features/game/widgets/pause_overlay.dart';
 import 'package:arrow_flow/features/home/home_provider.dart';
 import 'package:arrow_flow/features/level_select/level_select_provider.dart';
+import 'package:arrow_flow/features/win_dialog/win_provider.dart';
 import 'package:arrow_flow/game/models/game_state.dart';
 
 /// Main game screen.
@@ -84,6 +85,19 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             .read(homeProvider.notifier)
             .setCurrentLevel(level.worldId, level.id),
       ]);
+
+      // Write win result so the win screen can display it (gameProvider
+      // is autoDispose and will be gone by the time the win screen mounts).
+      ref.read(winProvider.notifier).setResult(WinResult(
+            levelId: level.id,
+            stars: complete.stars,
+            coinsEarned: complete.coinsEarned,
+            xpEarned: complete.xpEarned,
+            moveCount: complete.finalState.moveCount,
+            elapsedTime: complete.finalState.elapsedTime,
+            isPerfect: complete.stars == 3 &&
+                complete.finalState.hintCount == 3, // no hints used
+          ));
 
       if (!mounted) return;
       context.go('/win/${level.id}');
