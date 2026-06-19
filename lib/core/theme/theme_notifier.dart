@@ -53,7 +53,7 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
   ThemeNotifier(this._prefs)
       : super(const ThemeState(
           visualStyle: VisualStyle.minimalist,
-          themeMode: ThemeMode.system,
+          themeMode: ThemeMode.dark,
         )) {
     _loadFromPrefs();
   }
@@ -63,7 +63,7 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
   /// Updates the active visual style and persists the change.
   void setVisualStyle(VisualStyle style) {
     state = state.copyWith(visualStyle: style);
-    _prefs.setString(_kVisualStyleKey, style.name);
+    _prefs.setString(_kVisualStyleKey, style.toString().split('.').last);
   }
 
   /// Updates the theme mode (light / dark / system) and persists the change.
@@ -79,7 +79,7 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
 
     final visualStyle = styleString != null
         ? VisualStyle.values.firstWhere(
-            (v) => v.name == styleString,
+            (v) => v.toString().split('.').last == styleString,
             orElse: () => VisualStyle.minimalist,
           )
         : VisualStyle.minimalist;
@@ -109,7 +109,7 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
       case 'dark':
         return ThemeMode.dark;
       default:
-        return ThemeMode.system;
+        return ThemeMode.dark;
     }
   }
 }
