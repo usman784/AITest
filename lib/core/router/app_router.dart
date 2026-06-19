@@ -6,6 +6,7 @@ import 'package:arrow_flow/features/onboarding/onboarding_screen.dart';
 import 'package:arrow_flow/features/home/home_screen.dart';
 import 'package:arrow_flow/features/level_select/level_select_screen.dart';
 import 'package:arrow_flow/features/level_select/pack_level_select_screen.dart';
+import 'package:arrow_flow/features/game/maze_game_screen.dart';
 import 'package:arrow_flow/features/game/game_screen.dart';
 import 'package:arrow_flow/features/win_dialog/win_dialog.dart';
 import 'package:arrow_flow/features/settings/settings_screen.dart';
@@ -102,11 +103,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/game/:packId/:levelId',
-        builder: (_, state) => GameScreen(
-          levelId: int.tryParse(
-                state.pathParameters['levelId'] ?? '',
-              ) ??
-              1,
+        builder: (_, state) => MazeGameScreen(
+          packId:  int.tryParse(state.pathParameters['packId']  ?? '') ?? 1,
+          levelId: int.tryParse(state.pathParameters['levelId'] ?? '') ?? 1,
         ),
       ),
     ],

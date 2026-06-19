@@ -1,0 +1,128 @@
+{
+  "levels": [
+    {
+      "id": 1,
+      "packId": 1,
+      "gridRows": 1,
+      "gridCols": 3,
+      "startNodeId": 0,
+      "exitNodeId": 2,
+      "nodes": [
+        { "id": 0, "row": 0, "col": 0, "type": "start", "direction": "right" },
+        { "id": 1, "row": 0, "col": 1, "type": "free",  "direction": "up"    },
+        { "id": 2, "row": 0, "col": 2, "type": "exit",  "direction": "right" }
+      ],
+      "corridors": [
+        { "from": 0, "to": 1 },
+        { "from": 1, "to": 2 }
+      ],
+      "par": 1
+    },
+    {
+      "id": 2,
+      "packId": 1,
+      "gridRows": 2,
+      "gridCols": 2,
+      "startNodeId": 0,
+      "exitNodeId": 3,
+      "nodes": [
+        { "id": 0, "row": 0, "col": 0, "type": "start", "direction": "right" },
+        { "id": 1, "row": 0, "col": 1, "type": "free",  "direction": "up"    },
+        { "id": 2, "row": 1, "col": 1, "type": "free",  "direction": "left"  },
+        { "id": 3, "row": 1, "col": 0, "type": "exit",  "direction": "right" }
+      ],
+      "corridors": [
+        { "from": 0, "to": 1 },
+        { "from": 1, "to": 2 },
+        { "from": 2, "to": 3 }
+      ],
+      "par": 2
+    },
+    {
+      "id": 3,
+      "packId": 1,
+      "gridRows": 2,
+      "gridCols": 3,
+      "startNodeId": 0,
+      "exitNodeId": 4,
+      "nodes": [
+        { "id": 0, "row": 0, "col": 0, "type": "start", "direction": "right" },
+        { "id": 1, "row": 0, "col": 1, "type": "free",  "direction": "up"    },
+        { "id": 2, "row": 0, "col": 2, "type": "free",  "direction": "up"    },
+        { "id": 3, "row": 1, "col": 2, "type": "fixed", "direction": "left"  },
+        { "id": 4, "row": 1, "col": 0, "type": "exit",  "direction": "right" },
+        { "id": 5, "row": 1, "col": 1, "type": "free",  "direction": "down"  }
+      ],
+      "corridors": [
+        { "from": 0, "to": 1 },
+        { "from": 1, "to": 2 },
+        { "from": 2, "to": 3 },
+        { "from": 3, "to": 5 },
+        { "from": 5, "to": 4 }
+      ],
+      "par": 3
+    },
+    {
+      "id": 4,
+      "packId": 1,
+      "gridRows": 3,
+      "gridCols": 3,
+      "startNodeId": 0,
+      "exitNodeId": 5,
+      "nodes": [
+        { "id": 0, "row": 0, "col": 0, "type": "start", "direction": "right" },
+        { "id": 1, "row": 0, "col": 1, "type": "free",  "direction": "up"    },
+        { "id": 2, "row": 0, "col": 2, "type": "fixed", "direction": "down"  },
+        { "id": 3, "row": 1, "col": 2, "type": "free",  "direction": "up"    },
+        { "id": 4, "row": 2, "col": 2, "type": "free",  "direction": "up"    },
+        { "id": 5, "row": 2, "col": 0, "type": "exit",  "direction": "right" },
+        { "id": 6, "row": 2, "col": 1, "type": "free",  "direction": "down"  },
+        { "id": 7, "row": 1, "col": 0, "type": "free",  "direction": "up"    }
+      ],
+      "corridors": [
+        { "from": 0, "to": 1 },
+        { "from": 1, "to": 2 },
+        { "from": 2, "to": 3 },
+        { "from": 3, "to": 4 },
+        { "from": 4, "to": 6 },
+        { "from": 6, "to": 5 },
+        { "from": 3, "to": 7 },
+        { "from": 7, "to": 5 }
+      ],
+      "par": 4
+    },
+    {
+      "id": 5,
+      "packId": 1,
+      "gridRows": 3,
+      "gridCols": 3,
+      "startNodeId": 0,
+      "exitNodeId": 8,
+      "nodes": [
+        { "id": 0, "row": 0, "col": 0, "type": "start", "direction": "right" },
+        { "id": 1, "row": 0, "col": 1, "type": "free",  "direction": "left"  },
+        { "id": 2, "row": 0, "col": 2, "type": "free",  "direction": "left"  },
+        { "id": 3, "row": 1, "col": 0, "type": "fixed", "direction": "right" },
+        { "id": 4, "row": 1, "col": 1, "type": "free",  "direction": "up"    },
+        { "id": 5, "row": 1, "col": 2, "type": "free",  "direction": "left"  },
+        { "id": 6, "row": 2, "col": 0, "type": "free",  "direction": "up"    },
+        { "id": 7, "row": 2, "col": 1, "type": "free",  "direction": "left"  },
+        { "id": 8, "row": 2, "col": 2, "type": "exit",  "direction": "right" }
+      ],
+      "corridors": [
+        { "from": 0, "to": 1 },
+        { "from": 1, "to": 2 },
+        { "from": 0, "to": 3 },
+        { "from": 3, "to": 4 },
+        { "from": 4, "to": 5 },
+        { "from": 4, "to": 1 },
+        { "from": 3, "to": 6 },
+        { "from": 6, "to": 7 },
+        { "from": 7, "to": 8 },
+        { "from": 5, "to": 8 },
+        { "from": 2, "to": 5 }
+      ],
+      "par": 4
+    }
+  ]
+}
