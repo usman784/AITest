@@ -278,7 +278,8 @@ class _SelectionSummary extends StatelessWidget {
       'sketch': 'Sketch',
       'space': 'Space',
     };
-    return names[style.name] ?? style.name.toString();
+    final key = style.toString().split('.').last;
+    return names[key] ?? key;
   }
 
   static String _soundName(dynamic pack) {
@@ -289,7 +290,8 @@ class _SelectionSummary extends StatelessWidget {
       'scifi': 'Sci-Fi 🚀',
       'silent': 'Silent 🔇',
     };
-    return names[pack.name] ?? pack.name.toString();
+    final key = pack.toString().split('.').last;
+    return names[key] ?? key;
   }
 }
 
